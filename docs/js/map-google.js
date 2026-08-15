@@ -17,6 +17,13 @@ let map = null;
 let markers = [];
 let hereMarker = null;
 
+/** 作り直せるように状態を捨てる。 */
+export function resetMap() {
+  map = null;
+  markers = [];
+  hereMarker = null;
+}
+
 /** Maps JavaScript API を読み込む。1度だけ。 */
 export function load(key) {
   if (window.google?.maps) return Promise.resolve();

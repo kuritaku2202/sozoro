@@ -2,7 +2,7 @@
 import { distanceMeters, bearingDegrees, formatDistance, bearingToCompassLabel } from './geo.js';
 import { createCompass } from './compass.js';
 import * as congestion from './congestion.js';
-import { setupMap, mapProvider, initMap, renderLandmarks, setHere, fitAll, refreshMap } from './map.js';
+import { setupMap, mapProvider, initMap, renderLandmarks, setHere, fitAll, refreshMap, resetMap } from './map.js';
 import { fetchProposals, teaserOf, returnTimeText, radiusForMinutes, fetchNearby, atLeast } from './api.js';
 
 const ARRIVAL_KEY = 'sozoro.arrivalRadius';
@@ -418,19 +418,40 @@ async function startHome() {
   }
   enableSheetDrag();
   setDetent('peek');
-  // Google マップが使えるか先に決める。駄目なら国土地理院に落ちる
-  const provider = await setupMap();
+
+  /** 地図を作って、いまの状態を描き直す。落ちたときにも同じ手順で作り直す。 */
+  const buildMap = () => {
+    $('map').replaceChildren();          // 前の地図の残骸を消す
+    initMap('map', undefined, (latlon) => {
+      // 地図を直接タップして「そこにいることにする」。プリセットより自由が利く
+      demoUI.place.value = '';
+      setDemoPlace(latlon);
+    });
+    fitAll(congestion.landmarks());
+    if (state.position) setHere(state.position);
+    showMapCredit();
+  };
+
+  /** 出典表記を、実際に使った地図に合わせる。 */
+  const showMapCredit = () => {
+    const node = $('credit-map');
+    if (!node) return;
+    // Google の著作権表示は地図の中に出るので、ここは補足として名前だけ書く
+    node.textContent = mapProvider() === 'google' ? 'Google' : '';
+    if (mapProvider() !== 'google') {
+      const link = document.createElement('a');
+      link.href = 'https://maps.gsi.go.jp/development/ichiran.html';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = '国土地理院';
+      node.replaceChildren(link);
+    }
+  };
+
+  // Google マップが使えるか先に決める。キーが無効なら描画の途中でも国土地理院に落ちる
+  const provider = await setupMap(() => { resetMap(); buildMap(); renderHome(); });
   document.body.dataset.map = provider;
-  // 出典表記を実際に使った地図に合わせる。
-  // Google の著作権表示は地図の中に出るので、ここは補足として名前だけ書く。
-  const creditMap = $('credit-map');
-  if (creditMap && provider === 'google') creditMap.textContent = 'Google';
-  initMap('map', undefined, (latlon) => {
-    // 地図を直接タップして「そこにいることにする」。プリセットより自由が利く
-    demoUI.place.value = '';
-    setDemoPlace(latlon);
-  });
-  fitAll(congestion.landmarks());
+  buildMap();
   weather = await congestion.fetchWeather();
   renderHome();
 }

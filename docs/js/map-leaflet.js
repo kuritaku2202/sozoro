@@ -11,6 +11,14 @@ let map = null;
 let layer = null;      // ランドマークのマーカー群
 let hereMarker = null;
 
+/** 作り直せるように状態を捨てる。地図の入れ物は呼び出し側が空にする。 */
+export function resetMap() {
+  map?.remove();
+  map = null;
+  layer = null;
+  hereMarker = null;
+}
+
 /** 地図を作る。1度だけ呼ぶ。 */
 export function initMap(elementId, center = { lat: 35.7136, lon: 139.7859 }, onPick) {
   if (map) return map;
