@@ -1,81 +1,40 @@
-// ホーム画面の地図。ライブラリはここに閉じ込める（差し替えを安くするため）。
+// 地図の入口。Google マップが使えるならそちら、駄目なら Leaflet + 国土地理院。
 //
-// タイルは国土地理院の淡色地図。鍵も課金も要らず、出典表示だけで使える。
-// もともとグレー基調で情報量が少ないので、「詳細な地図にはしない」という
-// 方針に合う。この上に混雑を色分けしたランドマークだけを置く。
+// キーは Workers の secret に置き、/api/config 経由で受け取る。
+// **キーが無い・読み込めない場合は必ず Leaflet に落ちる。**
+// 提出当日に地図が出ない、という事故を避けるための保険。
 
-const GSI_PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
-const GSI_ATTR = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>';
+import * as leaflet from './map-leaflet.js';
+import * as googleMaps from './map-google.js';
 
-let map = null;
-let layer = null;      // ランドマークのマーカー群
-let hereMarker = null;
+let impl = leaflet;
+let which = 'leaflet';
 
-/** 地図を作る。1度だけ呼ぶ。 */
-export function initMap(elementId, center = { lat: 35.7136, lon: 139.7859 }, onPick) {
-  if (map) return map;
-  map = L.map(elementId, {
-    center: [center.lat, center.lon],
-    zoom: 14,
-    zoomControl: false,
-    attributionControl: true,
-  });
-  L.tileLayer(GSI_PALE, { maxZoom: 18, attribution: GSI_ATTR }).addTo(map);
-  L.control.zoom({ position: 'bottomright' }).addTo(map);
-  layer = L.layerGroup().addTo(map);
-  // デモ用。地図をタップした場所を「いまいる場所」にする
-  if (onPick) map.on('click', (e) => onPick({ lat: e.latlng.lat, lon: e.latlng.lng }));
-  return map;
-}
-
-/**
- * ランドマークを混雑度で塗り分けて置く。
- * @param {Array} estimates congestion.js の estimateAll() の戻り
- */
-export function renderLandmarks(estimates) {
-  if (!layer) return;
-  layer.clearLayers();
-  for (const e of estimates) {
-    const lm = e.landmark ?? e;
-    const marker = L.circleMarker([lm.lat, lm.lon], {
-      radius: e.label === '混雑' ? 13 : 10,
-      color: '#ffffff',
-      weight: 2,
-      fillColor: e.color,
-      fillOpacity: 0.9,
-    });
-    marker.bindTooltip(
-      `${e.name}<br><b>${e.label}</b>${e.estimated ? '（推定）' : ''}`,
-      { direction: 'top', offset: [0, -6] }
-    );
-    marker.addTo(layer);
+/** どちらの地図を使うか決める。initMap より前に1度だけ呼ぶ。 */
+export async function setupMap() {
+  try {
+    const res = await fetch('/api/config');
+    const config = res.ok ? await res.json() : {};
+    if (config.mapsKey) {
+      await googleMaps.load(config.mapsKey);
+      impl = googleMaps;
+      which = 'google';
+    }
+  } catch (error) {
+    console.warn('Google マップを使えないので国土地理院に落とす', error);
+    impl = leaflet;
+    which = 'leaflet';
   }
+  return which;
 }
 
-/** 現在地を置く。地図の中心も寄せる。 */
-export function setHere(position) {
-  if (!map) return;
-  const latlng = [position.lat, position.lon];
-  if (!hereMarker) {
-    hereMarker = L.circleMarker(latlng, {
-      radius: 7, color: '#ffffff', weight: 3,
-      fillColor: '#2f6fe0', fillOpacity: 1, className: 'demo-here',
-    }).addTo(map);
-    hereMarker.bindTooltip('いまここ', { direction: 'top', offset: [0, -6] });
-  } else {
-    hereMarker.setLatLng(latlng);
-  }
+/** いま使っている地図。出典表示の出し分けに使う。 */
+export function mapProvider() {
+  return which;
 }
 
-/** 地図の入れ物のサイズが変わったら呼ぶ。Leaflet は自分で気づかないため。 */
-export function refreshMap() {
-  if (map) map.invalidateSize();
-}
-
-/** ランドマークと現在地が全部入るように寄せる。 */
-export function fitAll(points) {
-  if (!map || points.length === 0) return;
-  map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lon])), {
-    padding: [40, 40], maxZoom: 15,
-  });
-}
+export const initMap = (...args) => impl.initMap(...args);
+export const renderLandmarks = (...args) => impl.renderLandmarks(...args);
+export const setHere = (...args) => impl.setHere(...args);
+export const fitAll = (...args) => impl.fitAll(...args);
+export const refreshMap = (...args) => impl.refreshMap(...args);

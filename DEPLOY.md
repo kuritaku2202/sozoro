@@ -52,6 +52,46 @@ wrangler d1 execute sozoro --remote \
 wrangler secret put ODPT_TOKEN
 ```
 
+## 3.5 Google マップのキーを入れる
+
+**キーが無いあいだは Leaflet + 国土地理院で動く。** 入れた瞬間に Google マップへ切り替わる。
+
+1. [Google Cloud コンソール](https://console.cloud.google.com/) でプロジェクトを作る
+2. **課金アカウントを紐づける**（クレジットカードが要る。無料枠内でも必須）
+3. 「**Maps JavaScript API**」を有効化する
+4. 認証情報 → APIキーを作成
+5. **キーの制限を必ずかける**（かけないと他所から使われて請求が来る）
+   - アプリケーションの制限: **HTTPリファラー**
+     `https://sozoro.opd-hackathon-b.workers.dev/*`
+   - APIの制限: **Maps JavaScript API のみ**
+6. Workers の secret に入れる
+
+```sh
+cd SOZORO
+wrangler secret put GOOGLE_MAPS_KEY
+wrangler deploy          # secret を反映させる
+```
+
+確認：
+
+```sh
+curl -s https://sozoro.opd-hackathon-b.workers.dev/api/config
+# {"mapsKey":"AIza..."} が返ればよい
+```
+
+ページを開いて、`<body data-map="google">` になっていれば切り替わっている。
+
+### 料金の目安（2026年8月時点）
+
+- **$200 の無料クレジットは2025年3月に廃止済み**
+- Maps JavaScript API（Dynamic Maps）は **月10,000回の地図読み込みまで無料**、超過は $7 / 1,000回
+- ハッカソンのデモなら無料枠で収まる。ただし**課金アカウントの登録自体は必須**
+
+### キーがブラウザに出ることについて
+
+Maps JavaScript API のキーは、仕様上ブラウザに出る。隠せない。
+**守りは Google Cloud 側の HTTP リファラー制限で行う。** 上の手順5を飛ばさないこと。
+
 ## 4. 公開する
 
 ```sh

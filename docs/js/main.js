@@ -2,7 +2,7 @@
 import { distanceMeters, bearingDegrees, formatDistance, bearingToCompassLabel } from './geo.js';
 import { createCompass } from './compass.js';
 import * as congestion from './congestion.js';
-import { initMap, renderLandmarks, setHere, fitAll, refreshMap } from './map.js';
+import { setupMap, mapProvider, initMap, renderLandmarks, setHere, fitAll, refreshMap } from './map.js';
 import { fetchProposals, teaserOf, returnTimeText, radiusForMinutes, fetchNearby, atLeast } from './api.js';
 
 const ARRIVAL_KEY = 'sozoro.arrivalRadius';
@@ -418,6 +418,13 @@ async function startHome() {
   }
   enableSheetDrag();
   setDetent('peek');
+  // Google マップが使えるか先に決める。駄目なら国土地理院に落ちる
+  const provider = await setupMap();
+  document.body.dataset.map = provider;
+  // 出典表記を実際に使った地図に合わせる。
+  // Google の著作権表示は地図の中に出るので、ここは補足として名前だけ書く。
+  const creditMap = $('credit-map');
+  if (creditMap && provider === 'google') creditMap.textContent = 'Google';
   initMap('map', undefined, (latlon) => {
     // 地図を直接タップして「そこにいることにする」。プリセットより自由が利く
     demoUI.place.value = '';

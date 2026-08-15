@@ -2,7 +2,7 @@
 // 目的地データ（Overpass）はキャッシュしない。古い場所を出さないため、
 // また位置情報に紐づく応答を端末に残さないため。
 
-const CACHE = 'sozoro-shell-v10';
+const CACHE = 'sozoro-shell-v11';
 const SHELL = [
   './',
   './index.html',
@@ -13,6 +13,8 @@ const SHELL = [
   './js/compass.js',
   './js/congestion.js',
   './js/map.js',
+  './js/map-leaflet.js',
+  './js/map-google.js',
   './js/api.js',
   './data/congestion.json',
   './vendor/leaflet.js',

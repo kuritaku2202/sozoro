@@ -66,6 +66,14 @@ export default {
     if (!url.pathname.startsWith('/api/')) {
       return env.ASSETS.fetch(request);
     }
+    // 地図のキーをフロントに渡す。Maps JavaScript API のキーはブラウザに出る作りなので、
+    // 秘密ではない。守りは Google Cloud 側の HTTP リファラ制限で行う。
+    // ここに置くのは、リポジトリに直書きしないためと、差し替えを wrangler secret で済ませるため。
+    if (url.pathname === '/api/config') {
+      return Response.json({ mapsKey: env.GOOGLE_MAPS_KEY ?? null },
+                           { headers: { 'cache-control': 'no-store' } });
+    }
+
     if (url.pathname !== '/api/destinations' && url.pathname !== '/api/nearby') {
       return Response.json({ error: 'そのAPIは無い' }, { status: 404 });
     }
