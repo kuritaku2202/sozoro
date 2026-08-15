@@ -4,17 +4,17 @@
   {
    "max": 0.45,
    "label": "空いている",
-   "color": "#3f9e5a"
+   "color": "#3f6f4f"
   },
   {
    "max": 0.75,
    "label": "ふつう",
-   "color": "#e0a12a"
+   "color": "#8a6516"
   },
   {
    "max": 99,
    "label": "混雑",
-   "color": "#d94f4f"
+   "color": "#b3261e"
   }
  ],
  "peak_range": [

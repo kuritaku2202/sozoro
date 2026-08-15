@@ -46,6 +46,16 @@ function choose(rows, n = 3) {
   };
   take(rows.filter((r) => r.is_partner === 1));   // 加盟店枠（無ければ素通り）
   while (picked.length < n && take(rows)) {}
+
+  // 町字が足りない場所（谷中の中だけ、など）では上のループが3件に届かない。
+  // 「別々の町字から」は散らすための優先ルールであって、案の数を削る理由ではないので、
+  // 足りないぶんは同じ町字からでも埋める。
+  if (picked.length < n) {
+    const rest = rows.filter((r) => !picked.includes(r));
+    while (picked.length < n && rest.length > 0) {
+      picked.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
+    }
+  }
   return picked;
 }
 
