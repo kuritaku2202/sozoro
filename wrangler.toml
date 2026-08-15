@@ -1,0 +1,20 @@
+name = "sozoro"
+main = "worker/index.js"
+compatibility_date = "2026-08-01"
+
+# 静的ファイル（index.html / app.css / js / icons / data）とAPIを1つのWorkerで出す。
+# Pages と Worker に分けると URL が2つになり、提出直前に事故りやすいため。
+[assets]
+directory = "./docs"
+binding = "ASSETS"
+
+# D1（目的地マスタ）
+[[d1_databases]]
+binding = "DB"
+database_name = "sozoro"
+database_id = "74012c4f-5b3b-4ef7-8de0-c7f7276c8473"
+
+[observability]
+enabled = true
+
+# ODPT のキーはここに置かない。`wrangler secret put ODPT_TOKEN` で入れる
