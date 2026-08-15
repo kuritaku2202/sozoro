@@ -51,6 +51,8 @@ const state = {
   visited: new Set(),
   watchId: null,
   compass: null,
+  demoPosition: null,  // デモモードで固定した現在地。null なら実測を使う
+  walkTimer: null,     // 「歩く（早送り）」のタイマー
   rotation: 0,         // 矢印の連続回転量。近い方向へ回すために保持する
 };
 
@@ -97,6 +99,11 @@ function geoErrorMessage(error) {
 }
 
 function locateOnce() {
+  if (state.demoPosition) {
+    updatePosition(state.demoPosition.lat, state.demoPosition.lon);
+    setTripStatus('デモモードの場所を使っています。', 'ready');
+    return;
+  }
   if (!navigator.geolocation) {
     setTripStatus('この端末では位置情報が使えません。', 'error');
     return;
@@ -111,14 +118,22 @@ function locateOnce() {
   );
 }
 
+/** 現在地が更新されたときの共通処理。実測でもデモでもここを通す。 */
+function updatePosition(lat, lon) {
+  state.position = { lat, lon };
+  setHere(state.position);
+  render();
+  checkArrival();
+}
+
 function startWatching() {
+  // デモで場所を固定しているときは実測を見にいかない（上書きされてしまうため）
+  if (state.demoPosition) return;
   if (state.watchId !== null) return;
   state.watchId = navigator.geolocation.watchPosition(
     (pos) => {
-      state.position = { lat: pos.coords.latitude, lon: pos.coords.longitude };
       showError(''); // 測位が復帰したら、直前の一時的なエラー表示を消す
-      render();
-      checkArrival();
+      updatePosition(pos.coords.latitude, pos.coords.longitude);
     },
     (error) => showError(geoErrorMessage(error)),
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
@@ -245,6 +260,7 @@ async function loadNearby(dest) {
 }
 
 function goHome() {
+  stopWalking();
   stopWatching();
   state.compass?.stop();
   state.destination = null;
@@ -262,6 +278,7 @@ el.btnRepick.addEventListener('click', () => show('proposals'));
 el.btnQuit.addEventListener('click', goHome);
 el.btnHome.addEventListener('click', goHome);
 el.btnAgain.addEventListener('click', () => {
+  stopWalking();
   // 旧 Overpass 経路には戻さない。台東区のオープンデータで選び直す。
   show('mood');
   trip.status.textContent = '';
@@ -288,7 +305,7 @@ function renderHome() {
   // ランドマーク個別の状態はツールチップ側で見せる。
   renderLandmarks(estimates.map((e) => ({ ...e, landmark: byId.get(e.id) })));
 
-  const card = congestion.homeCard(undefined, weather);
+  const card = congestion.homeCard(undefined, weather, state.position);
   home.title.textContent = card.title;
   home.body.textContent = card.body;
   home.demo.hidden = !card.demo;
@@ -309,7 +326,11 @@ async function startHome() {
     console.warn(error);
     return;
   }
-  initMap('map');
+  initMap('map', undefined, (latlon) => {
+    // 地図を直接タップして「そこにいることにする」。プリセットより自由が利く
+    demoUI.place.value = '';
+    setDemoPlace(latlon);
+  });
   fitAll(congestion.landmarks());
   weather = await congestion.fetchWeather();
   renderHome();
@@ -332,6 +353,69 @@ home.reset.addEventListener('click', async () => {
   renderHome();
 });
 
+
+/* ---------- デモモード（現地にいなくても試せるようにする）---------- */
+
+const demoUI = {
+  place: $('demo-place'),
+  navBox: $('nav-demo'),
+  walk: $('demo-walk'),
+};
+
+/** デモの場所を設定する。null を渡すと実測に戻る。 */
+function setDemoPlace(latlon) {
+  stopWalking();
+  if (!latlon) {
+    state.demoPosition = null;
+    demoUI.navBox.hidden = true;
+    locateOnce();
+    return;
+  }
+  state.demoPosition = latlon;
+  stopWatching();                 // 実測に上書きされないように止める
+  demoUI.navBox.hidden = false;
+  updatePosition(latlon.lat, latlon.lon);
+  setTripStatus('デモモードの場所を使っています。', 'ready');
+  renderHome();
+}
+
+function stopWalking() {
+  if (state.walkTimer !== null) {
+    clearInterval(state.walkTimer);
+    state.walkTimer = null;
+    demoUI.walk.textContent = '目的地に向かって歩く（早送り）';
+  }
+}
+
+/**
+ * 目的地に向かって少しずつ近づける。
+ * 実際に歩かないと到着が試せないので、デモではここで距離を詰める。
+ */
+function startWalking() {
+  if (!state.destination || !state.position) return;
+  if (state.walkTimer !== null) { stopWalking(); return; }
+  demoUI.walk.textContent = '歩くのをやめる';
+  state.walkTimer = setInterval(() => {
+    if (!state.destination || !state.position) { stopWalking(); return; }
+    const { lat, lon } = state.position;
+    const next = {
+      lat: lat + (state.destination.lat - lat) * 0.28,
+      lon: lon + (state.destination.lon - lon) * 0.28,
+    };
+    // デモ位置も更新しておく（到着後に引き直しても、いた場所から続く）
+    state.demoPosition = next;
+    updatePosition(next.lat, next.lon);
+    if (!state.destination) stopWalking();   // checkArrival が到着させたら止まる
+  }, 420);
+}
+
+demoUI.place.addEventListener('change', () => {
+  const value = demoUI.place.value;
+  if (!value) { setDemoPlace(null); return; }
+  const [lat, lon] = value.split(',').map(Number);
+  setDemoPlace({ lat, lon });
+});
+demoUI.walk.addEventListener('click', startWalking);
 
 /* ---------- 気分・持ち時間 → 3案（②③④）---------- */
 

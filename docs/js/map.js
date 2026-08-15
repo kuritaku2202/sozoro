@@ -12,7 +12,7 @@ let layer = null;      // ランドマークのマーカー群
 let hereMarker = null;
 
 /** 地図を作る。1度だけ呼ぶ。 */
-export function initMap(elementId, center = { lat: 35.7136, lon: 139.7859 }) {
+export function initMap(elementId, center = { lat: 35.7136, lon: 139.7859 }, onPick) {
   if (map) return map;
   map = L.map(elementId, {
     center: [center.lat, center.lon],
@@ -23,6 +23,8 @@ export function initMap(elementId, center = { lat: 35.7136, lon: 139.7859 }) {
   L.tileLayer(GSI_PALE, { maxZoom: 18, attribution: GSI_ATTR }).addTo(map);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   layer = L.layerGroup().addTo(map);
+  // デモ用。地図をタップした場所を「いまいる場所」にする
+  if (onPick) map.on('click', (e) => onPick({ lat: e.latlng.lat, lon: e.latlng.lng }));
   return map;
 }
 
@@ -57,7 +59,7 @@ export function setHere(position) {
   if (!hereMarker) {
     hereMarker = L.circleMarker(latlng, {
       radius: 7, color: '#ffffff', weight: 3,
-      fillColor: '#2f6fe0', fillOpacity: 1,
+      fillColor: '#2f6fe0', fillOpacity: 1, className: 'demo-here',
     }).addTo(map);
     hereMarker.bindTooltip('いまここ', { direction: 'top', offset: [0, -6] });
   } else {

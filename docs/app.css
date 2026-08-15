@@ -546,3 +546,19 @@ input[type='range'] {
     transition-duration: .01ms !important;
   }
 }
+
+/* ── デモモードの操作 ───────────────────────────────────── */
+.demo__label {
+  margin: .9rem 0 .3rem;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--on-surface-variant);
+}
+.demo__label:first-of-type { margin-top: .8rem; }
+.demo--inline { background: var(--primary-container); color: var(--on-primary-container); }
+.demo--inline .demo__label { color: inherit; opacity: .8; }
+.demo--inline .btn--link { color: inherit; width: 100%; }
+
+/* デモの現在地マーカーを目立たせる */
+.leaflet-container .demo-here { filter: drop-shadow(0 0 6px rgba(0, 0, 0, .35)); }

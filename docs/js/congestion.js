@@ -10,7 +10,13 @@
 // 取れなかったので 1.0 で無効化してある。どちらも ODPT の駅時刻表で差し替える。
 // data/congestion.json の provisional フラグがその区別を持っている。
 
+import { distanceMeters } from './geo.js';
+
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+
+// 「今ここは混んでいます」と言えるのは、自分がいる場所の話に限る。
+// これより遠いランドマークは、自分の体験と関係がないので主役にしない。
+const NEARBY_M = 1200;
 
 let model = null;
 
@@ -95,9 +101,32 @@ export function estimateAll(at = now(), weather = '晴') {
  * いま混雑しているランドマークのうち、最も混んでいるものを返す。
  * ホーム画面で「今、雷門は混んでいます」を出すかどうかの判定に使う。
  */
-export function mostCrowded(at = now(), weather = '晴') {
-  const top = estimateAll(at, weather)[0];
+export function mostCrowded(at = now(), weather = '晴', origin = null) {
+  const top = rankNear(at, weather, origin)[0];
   return top && top.label === '混雑' ? top : null;
+}
+
+/**
+ * 現在地の近くにあるランドマークだけを、混んでいる順に返す。
+ * 近くに1つも無ければ（台東区の外から見ているときなど）全件から返す。
+ */
+function rankNear(at, weather, origin) {
+  const all = estimateAll(at, weather);
+  if (!origin) return all;
+  const byId = new Map(model.landmarks.map((l) => [l.id, l]));
+  const near = all
+    .map((e) => ({ ...e, distance: distanceMeters(origin, byId.get(e.id)) }))
+    .filter((e) => e.distance <= NEARBY_M);
+  if (near.length === 0) return all;
+
+  // 混んでいる場所が複数あるときは、**いちばん近いもの**を主役にする。
+  // 谷中に立っている人に「上野公園が混んでいます」と言っても、自分の話に聞こえない。
+  const crowded = near.filter((e) => e.label === '混雑');
+  if (crowded.length > 0) {
+    crowded.sort((a, b) => a.distance - b.distance);
+    return [...crowded, ...near.filter((e) => e.label !== '混雑')];
+  }
+  return near.sort((a, b) => a.distance - b.distance);
 }
 
 /**
@@ -147,11 +176,14 @@ export async function fetchWeather() {
  * 混んでいないときは黙るのではなく、落ち着いている事実を伝えて散歩に誘う。
  * 常に「混んでいます」と言うアプリは信用されないので、ここは必ず出し分ける。
  */
-export function homeCard(at = now(), weather = '晴') {
-  const ranked = estimateAll(at, weather);
+export function homeCard(at = now(), weather = '晴', origin = null) {
+  const ranked = rankNear(at, weather, origin);
   const top = ranked[0];
   const hint = offPeakHint(model.landmarks.find((l) => l.id === top.id), at, weather);
-  const quiet = ranked.filter((r) => r.label === '空いている').map((r) => r.name);
+  // 空いている場所は「行き先の候補」なので、近さで絞らず全域から出す
+  const quiet = estimateAll(at, weather)
+    .filter((r) => r.label === '空いている')
+    .map((r) => r.name);
 
   if (top.label === '混雑') {
     const calm = hint.firstCalmHour;

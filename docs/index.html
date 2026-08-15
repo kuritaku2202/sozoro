@@ -36,8 +36,25 @@
         <button class="btn btn--primary" id="home-cta">空き時間で行ける場所を探す</button>
       </div>
 
-      <details class="demo">
-        <summary>デモ用に日時を変える</summary>
+      <details class="demo" id="demo-panel">
+        <summary>デモモード（現地にいなくても試せます）</summary>
+
+        <p class="demo__label">いる場所</p>
+        <div class="demo__row">
+          <select id="demo-place">
+            <option value="">実際の現在地を使う</option>
+            <option value="35.7108,139.7967">雷門（浅草）</option>
+            <option value="35.7147,139.7968">浅草寺 境内</option>
+            <option value="35.7154,139.7734">上野公園</option>
+            <option value="35.7083,139.7744">アメヤ横丁</option>
+            <option value="35.7205,139.7654">谷中</option>
+            <option value="35.7039,139.7897">蔵前</option>
+            <option value="35.6995,139.7853">浅草橋</option>
+          </select>
+        </div>
+        <p class="note note--small">地図を直接タップしても、そこにいることにできます。</p>
+
+        <p class="demo__label">日時と天気</p>
         <div class="demo__row">
           <input type="datetime-local" id="demo-time">
           <select id="demo-weather">
@@ -46,11 +63,13 @@
         </div>
         <div class="demo__row">
           <button class="btn btn--link" id="demo-apply">この日時にする</button>
-          <button class="btn btn--link" id="demo-reset">実時刻に戻す</button>
+          <button class="btn btn--link" id="demo-reset">すべて実際の値に戻す</button>
         </div>
+
         <p class="note note--small">
           8月は最も空く月（係数0.871）で、15時以降は混雑スコアが落ちます。
-          実時刻のままだと「混んでいます」が出ないことがあるため、審査で見せる用の操作です。
+          実時刻・実際の場所のままだと「混んでいます」が出ないことがあるため、
+          <strong>浅草か上野を選び、11月あたりの正午にする</strong>と体験がひととおり見られます。
         </p>
       </details>
     </section>
@@ -148,6 +167,11 @@
       <div class="btn-row">
         <button class="btn" id="btn-repick">引き直す</button>
         <button class="btn btn--quiet" id="btn-quit">やめる</button>
+      </div>
+
+      <div class="demo demo--inline" id="nav-demo" hidden>
+        <p class="demo__label">デモモード中</p>
+        <button class="btn btn--link" id="demo-walk">目的地に向かって歩く（早送り）</button>
       </div>
     </section>
 
