@@ -269,7 +269,11 @@ input[type='range'] {
 }
 .stage[hidden] { display: none; }
 
-.map { position: absolute; inset: 0; z-index: 0; }
+.map {
+  position: absolute;
+  inset: 0 0 auto 0;   /* 高さは JS がシートの上端に合わせる */
+  z-index: 0;
+}
 
 .sheet {
   position: absolute;

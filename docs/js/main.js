@@ -67,18 +67,33 @@ const sheet = $('sheet');
 const grip = $('sheet-grip');
 const sheetBody = $('sheet-body');
 
+/* ══════════════════════════════════════════════════════════════
+   シートの見え方の調整つまみ。ここの数字だけ変えればよい。
+   変えたら SOZORO/ で `wrangler deploy` すると本番に出る。
+   ══════════════════════════════════════════════════════════════ */
+
+/** 畳みきったとき（min）に見せる高さ（px）。つまみのバーだけなら 30 くらい。 */
+const SHEET_MIN_PX = 96;
+
+/** カードを見せる状態（peek）で、シートが占める割合。0.46 なら画面の46%。 */
+const SHEET_PEEK_RATIO = 0.46;
+
+/** 全開（full）でも上にこれだけ地図を残す（px）。0 なら画面いっぱい。 */
+const SHEET_FULL_TOP_GAP = 0;
+
 /**
  * シートの3段階。Google マップと同じ考え方で、
- *   min  … つまみの横バーだけ見せる（地図を目一杯見たいとき）
+ *   min  … 少しだけ見せる（地図を目一杯見たいとき）
  *   peek … カードの見出しとボタンが見える
  *   full … 中身を読む
  */
 function detentOffsets() {
   const height = sheet.offsetHeight;
+  const minVisible = Math.max(SHEET_MIN_PX, grip.offsetHeight);  // つまみより小さくはしない
   return {
-    full: 0,
-    peek: Math.max(height - Math.round(stage.offsetHeight * 0.46), 0),
-    min: Math.max(height - grip.offsetHeight, 0),
+    full: SHEET_FULL_TOP_GAP,
+    peek: Math.max(height - Math.round(stage.offsetHeight * SHEET_PEEK_RATIO), 0),
+    min: Math.max(height - minVisible, 0),
   };
 }
 
@@ -88,6 +103,33 @@ function setDetent(name) {
   sheet.style.setProperty('--sheet-offset', `${offset}px`);
   grip.setAttribute('aria-expanded', String(name === 'full'));
   if (name !== 'full') sheetBody.scrollTop = 0;
+  fitMapAboveSheet(offset);
+}
+
+/**
+ * 地図の高さをシートの上端までに縮める。
+ *
+ * Google マップは自分のロゴと著作権表示を地図の一番下に出す。
+ * シートを重ねると、それが完全に隠れてしまう。Google Maps Platform の規約は
+ * 帰属表示を覆うことを認めていないので、地図自体をシートの上で終わらせる。
+ * 隠れている部分を描かなくなるので、その分だけ描画も軽くなる。
+ */
+function fitMapAboveSheet(offset) {
+  const mapEl = $('map');
+  if (!mapEl) return;
+  // 動いている最中は計算値で追従させる（見た目が遅れないように）
+  const predicted = stage.offsetHeight - sheet.offsetHeight + offset;
+  mapEl.style.height = `${Math.max(Math.round(predicted), 0)}px`;
+  requestAnimationFrame(refreshMap);
+}
+
+/** 動き終わったら、実際の位置で測り直す。計算値は数px ずれることがある。 */
+function settleMapHeight() {
+  const mapEl = $('map');
+  if (!mapEl) return;
+  const top = sheet.getBoundingClientRect().top - stage.getBoundingClientRect().top;
+  mapEl.style.height = `${Math.max(Math.round(top), 0)}px`;
+  refreshMap();
 }
 
 /** いまの位置から、いちばん近い段階を選ぶ。 */
@@ -134,6 +176,11 @@ function enableSheetDrag() {
   // 画面の高さが変わったら段階を計算し直す。
   // iOS はURLバーの出入りで高さが変わるので visualViewport も見る。
   const reapply = () => setDetent(sheet.dataset.detent ?? 'peek');
+  // シートが動き終わったら、地図の高さを実測で合わせ直す。
+  // Google のロゴと著作権表示が隠れないようにするため（規約で覆えない）。
+  sheet.addEventListener('transitionend', (event) => {
+    if (event.propertyName === 'transform') settleMapHeight();
+  });
   window.addEventListener('resize', reapply);
   window.addEventListener('orientationchange', reapply);
   window.visualViewport?.addEventListener('resize', reapply);
