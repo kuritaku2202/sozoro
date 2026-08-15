@@ -2,7 +2,7 @@
 import { distanceMeters, bearingDegrees, formatDistance, bearingToCompassLabel } from './geo.js';
 import { createCompass } from './compass.js';
 import * as congestion from './congestion.js';
-import { initMap, renderLandmarks, setHere, fitAll } from './map.js';
+import { initMap, renderLandmarks, setHere, fitAll, refreshMap } from './map.js';
 import { fetchProposals, teaserOf, returnTimeText, radiusForMinutes, fetchNearby, atLeast } from './api.js';
 
 const ARRIVAL_KEY = 'sozoro.arrivalRadius';
@@ -56,11 +56,76 @@ const state = {
   rotation: 0,         // 矢印の連続回転量。近い方向へ回すために保持する
 };
 
+/* ---------- 地図に重なるシート ---------- */
+
+// ⑤「運命の旅が始まる」より前の画面は、地図の上のシートに出す。
+// ⑤以降は地図を隠して全画面にする（歩いている最中に地図は要らない）。
+const SHEET_SCREENS = new Set(['home', 'mood', 'loading', 'proposals']);
+
+const stage = $('stage');
+const sheet = $('sheet');
+const grip = $('sheet-grip');
+const sheetBody = $('sheet-body');
+
+/** 畳んだときに見せる高さ。カードのタイトルとボタンが見えるだけ残す。 */
+function peekOffset() {
+  const hidden = sheet.offsetHeight - Math.round(stage.offsetHeight * 0.46);
+  return Math.max(hidden, 0);
+}
+
+function setDetent(name) {
+  sheet.dataset.detent = name;
+  sheet.style.setProperty('--sheet-offset', `${name === 'full' ? 0 : peekOffset()}px`);
+  grip.setAttribute('aria-expanded', String(name === 'full'));
+  if (name === 'peek') sheetBody.scrollTop = 0;
+}
+
+/** つまみを上下にドラッグして開閉する。指を離したら近いほうに吸い付く。 */
+function enableSheetDrag() {
+  let startY = 0;
+  let startOffset = 0;
+  let moved = 0;
+
+  const onMove = (event) => {
+    moved = event.clientY - startY;
+    const next = Math.min(Math.max(startOffset + moved, 0), peekOffset());
+    sheet.style.setProperty('--sheet-offset', `${next}px`);
+  };
+  const onUp = () => {
+    sheet.dataset.dragging = 'false';
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if (Math.abs(moved) < 6) {                       // 動いていない＝押しただけ
+      setDetent(sheet.dataset.detent === 'full' ? 'peek' : 'full');
+      return;
+    }
+    setDetent(moved < 0 ? 'full' : 'peek');          // 上へ動かしたら開く
+  };
+
+  grip.addEventListener('pointerdown', (event) => {
+    startY = event.clientY;
+    startOffset = sheet.dataset.detent === 'full' ? 0 : peekOffset();
+    moved = 0;
+    sheet.dataset.dragging = 'true';
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  });
+
+  window.addEventListener('resize', () => setDetent(sheet.dataset.detent ?? 'peek'));
+}
+
 /* ---------- 画面 ---------- */
 
 function show(name) {
+  const inSheet = SHEET_SCREENS.has(name);
+  stage.hidden = !inSheet;
   for (const [key, node] of Object.entries(el.screens)) {
     node.hidden = key !== name;
+  }
+  if (inSheet) {
+    // ホームは地図を見せたいので畳む。それ以外は内容を読ませたいので開く。
+    setDetent(name === 'home' ? 'peek' : 'full');
+    requestAnimationFrame(refreshMap);  // 入れ物のサイズが変わったことを Leaflet に教える
   }
 }
 
@@ -326,6 +391,8 @@ async function startHome() {
     console.warn(error);
     return;
   }
+  enableSheetDrag();
+  setDetent('peek');
   initMap('map', undefined, (latlon) => {
     // 地図を直接タップして「そこにいることにする」。プリセットより自由が利く
     demoUI.place.value = '';

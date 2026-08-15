@@ -25,8 +25,17 @@
 
 
     <!-- 0枚目: ホーム。混雑の提示から始める -->
-    <section class="screen" id="screen-home">
+    <!-- 地図の上にシートを重ねる（Google マップのネイティブアプリと同じ形）。
+         ⑤「運命の旅が始まる」から先は、地図を隠して全画面に切り替える。 -->
+    <div class="stage" id="stage">
       <div class="map" id="map" aria-label="台東区の主要ランドマークの混雑状況"></div>
+
+      <section class="sheet" id="sheet" data-detent="peek">
+        <button class="sheet__grip" id="sheet-grip" aria-label="パネルを開閉する"
+                aria-expanded="false"><span></span></button>
+        <div class="sheet__body" id="sheet-body">
+
+    <section class="screen" id="screen-home">
 
       <div class="card" id="home-card">
         <p class="card__demo" id="home-demo" hidden>デモ表示中</p>
@@ -72,6 +81,14 @@
           <strong>浅草か上野を選び、11月あたりの正午にする</strong>と体験がひととおり見られます。
         </p>
       </details>
+
+      <footer class="credit">
+    <p>目的地データ: <a href="https://www.city.taito.lg.jp/kusei/online/opendata/" target="_blank" rel="noopener">台東区オープンデータ</a>（CC-BY表示4.0国際）</p>
+    <p>本作品の内容について、台東区は一切保証しないものとする。</p>
+    <p>地図: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>／
+       画像・解説: <a href="https://ja.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>（CC BY-SA）</p>
+    <p>混雑推定: 台東区 来訪者アンケート調査結果／デジタル観光統計オープンデータ／気象庁</p>
+      </footer>
     </section>
 
 
@@ -130,15 +147,19 @@
       </div>
     </section>
 
+        </div><!-- /.sheet__body -->
+      </section><!-- /.sheet -->
+    </div><!-- /.stage -->
+
     <!-- 5枚目: 運命の旅が始まる -->
-    <section class="screen screen--center" id="screen-journey" hidden>
+    <section class="screen screen--center screen--full" id="screen-journey" hidden>
       <p class="journey__text">運命の旅が<br>始まります。</p>
       <div class="journey__line" aria-hidden="true"></div>
     </section>
 
 
     <!-- 2枚目: ナビ -->
-    <section class="screen" id="screen-nav" hidden>
+    <section class="screen screen--full" id="screen-nav" hidden>
       <p class="nav__caption" id="nav-caption">こっちの方角です</p>
 
       <div class="compass">
@@ -176,7 +197,7 @@
     </section>
 
     <!-- 3枚目: 到着 -->
-    <section class="screen" id="screen-arrived" hidden>
+    <section class="screen screen--full" id="screen-arrived" hidden>
       <p class="arrived__eyebrow">着きました</p>
       <h2 class="arrived__name" id="arrived-name" role="status">—</h2>
       <p class="arrived__kind" id="arrived-kind"></p>
@@ -203,13 +224,6 @@
 
   <p class="error" id="error" hidden></p>
 
-  <footer class="credit">
-    <p>目的地データ: <a href="https://www.city.taito.lg.jp/kusei/online/opendata/" target="_blank" rel="noopener">台東区オープンデータ</a>（CC-BY表示4.0国際）</p>
-    <p>本作品の内容について、台東区は一切保証しないものとする。</p>
-    <p>地図: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>／
-       画像・解説: <a href="https://ja.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>（CC BY-SA）</p>
-    <p>混雑推定: 台東区 来訪者アンケート調査結果／デジタル観光統計オープンデータ／気象庁</p>
-  </footer>
 
 </div>
 <script src="vendor/leaflet.js"></script>

@@ -67,6 +67,11 @@ export function setHere(position) {
   }
 }
 
+/** 地図の入れ物のサイズが変わったら呼ぶ。Leaflet は自分で気づかないため。 */
+export function refreshMap() {
+  if (map) map.invalidateSize();
+}
+
 /** ランドマークと現在地が全部入るように寄せる。 */
 export function fitAll(points) {
   if (!map || points.length === 0) return;
