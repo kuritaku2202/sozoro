@@ -285,7 +285,10 @@ input[type='range'] {
   /* Leaflet はペインに z-index 400、コントロールに 800 を振る。
      指定しないとシートがその下に潜って地図に隠れる。 */
   z-index: 1000;
-  transform: translateY(var(--sheet-offset, 60%));
+  /* JS が動く前でも peek と同じ位置に出す。
+     シートの高さは舞台の 92%。舞台の 46% を見せたいので、
+     隠す量は (92-46)/92 = 50%（シート自身の高さに対して）。 */
+  transform: translateY(var(--sheet-offset, 50%));
   transition: transform var(--dur-mid) var(--ease-out);
   touch-action: none;          /* 縦スワイプを地図に取られないようにする */
 }

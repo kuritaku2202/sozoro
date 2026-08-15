@@ -131,7 +131,12 @@ function enableSheetDrag() {
     window.addEventListener('pointerup', onUp, { once: true });
   });
 
-  window.addEventListener('resize', () => setDetent(sheet.dataset.detent ?? 'peek'));
+  // 画面の高さが変わったら段階を計算し直す。
+  // iOS はURLバーの出入りで高さが変わるので visualViewport も見る。
+  const reapply = () => setDetent(sheet.dataset.detent ?? 'peek');
+  window.addEventListener('resize', reapply);
+  window.addEventListener('orientationchange', reapply);
+  window.visualViewport?.addEventListener('resize', reapply);
 }
 
 /* ---------- 画面 ---------- */
