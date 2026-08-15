@@ -313,7 +313,11 @@ input[type='range'] {
   padding: 0 1rem 1.25rem;
 }
 /* 畳んでいるときは中身をスクロールさせない（地図を触りたいので） */
-.sheet[data-detent='peek'] .sheet__body { overflow-y: hidden; }
+.sheet[data-detent='peek'] .sheet__body,
+.sheet[data-detent='min'] .sheet__body { overflow-y: hidden; }
+
+/* つまみだけ出している状態では、つまみを目立たせる */
+.sheet[data-detent='min'] .sheet__grip span { background: var(--outline); width: 52px; }
 
 /* 全画面の画面（⑤以降）は舞台を隠して出す */
 .screen--full { padding-bottom: .5rem; }

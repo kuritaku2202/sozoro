@@ -67,44 +67,64 @@ const sheet = $('sheet');
 const grip = $('sheet-grip');
 const sheetBody = $('sheet-body');
 
-/** 畳んだときに見せる高さ。カードのタイトルとボタンが見えるだけ残す。 */
-function peekOffset() {
-  const hidden = sheet.offsetHeight - Math.round(stage.offsetHeight * 0.46);
-  return Math.max(hidden, 0);
+/**
+ * シートの3段階。Google マップと同じ考え方で、
+ *   min  … つまみの横バーだけ見せる（地図を目一杯見たいとき）
+ *   peek … カードの見出しとボタンが見える
+ *   full … 中身を読む
+ */
+function detentOffsets() {
+  const height = sheet.offsetHeight;
+  return {
+    full: 0,
+    peek: Math.max(height - Math.round(stage.offsetHeight * 0.46), 0),
+    min: Math.max(height - grip.offsetHeight, 0),
+  };
 }
 
 function setDetent(name) {
+  const offset = detentOffsets()[name] ?? detentOffsets().peek;
   sheet.dataset.detent = name;
-  sheet.style.setProperty('--sheet-offset', `${name === 'full' ? 0 : peekOffset()}px`);
+  sheet.style.setProperty('--sheet-offset', `${offset}px`);
   grip.setAttribute('aria-expanded', String(name === 'full'));
-  if (name === 'peek') sheetBody.scrollTop = 0;
+  if (name !== 'full') sheetBody.scrollTop = 0;
 }
 
-/** つまみを上下にドラッグして開閉する。指を離したら近いほうに吸い付く。 */
+/** いまの位置から、いちばん近い段階を選ぶ。 */
+function nearestDetent(offset) {
+  const offsets = detentOffsets();
+  return Object.keys(offsets).reduce((best, key) =>
+    Math.abs(offsets[key] - offset) < Math.abs(offsets[best] - offset) ? key : best, 'peek');
+}
+
+/** つまみを上下にドラッグして開閉する。指を離したら近い段階に吸い付く。 */
 function enableSheetDrag() {
   let startY = 0;
   let startOffset = 0;
+  let current = 0;
   let moved = 0;
 
   const onMove = (event) => {
     moved = event.clientY - startY;
-    const next = Math.min(Math.max(startOffset + moved, 0), peekOffset());
-    sheet.style.setProperty('--sheet-offset', `${next}px`);
+    const limit = detentOffsets().min;
+    current = Math.min(Math.max(startOffset + moved, 0), limit);
+    sheet.style.setProperty('--sheet-offset', `${current}px`);
   };
   const onUp = () => {
     sheet.dataset.dragging = 'false';
     window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', onUp);
-    if (Math.abs(moved) < 6) {                       // 動いていない＝押しただけ
+    if (Math.abs(moved) < 6) {
+      // 動いていない＝押しただけ。開いていれば畳み、畳んでいれば開く
       setDetent(sheet.dataset.detent === 'full' ? 'peek' : 'full');
       return;
     }
-    setDetent(moved < 0 ? 'full' : 'peek');          // 上へ動かしたら開く
+    setDetent(nearestDetent(current));
   };
 
   grip.addEventListener('pointerdown', (event) => {
     startY = event.clientY;
-    startOffset = sheet.dataset.detent === 'full' ? 0 : peekOffset();
+    startOffset = detentOffsets()[sheet.dataset.detent] ?? 0;
+    current = startOffset;
     moved = 0;
     sheet.dataset.dragging = 'true';
     window.addEventListener('pointermove', onMove);
