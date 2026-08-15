@@ -27,35 +27,39 @@ const ATTRIBUTION = '台東区（CC BY 4.0）／本作品の内容について�
 
 /**
  * 3案を選ぶ。
- * 加盟店を必ず1枠は混ぜるが、残りは本当にランダム。
- * 3案は別々の町字から選ぶ（同じ方向に3案出すと選択肢に見えない）。
+ *
+ * 優先順位は 加盟店枠 → 画像のあるもの → 残り。
+ * 画像を先に出すのは、④の画面がモザイクで正体を隠す作りだから。
+ * 画像が無いと記号しか出せず、3案を見比べる楽しみが消えてしまう。
+ *
+ * どの段でも「別々の町字から」を守るが、町字が足りない場所では
+ * 案の数を優先して制約を外す（散らすための規則であって、数を削る理由ではない）。
  */
 function choose(rows, n = 3) {
   const picked = [];
-  const usedMachi = new Set();
-  const take = (pool) => {
-    const cands = pool.filter((r) => !usedMachi.has(r.machiaza) && !picked.includes(r));
+  const machiCount = new Map();
+
+  // 同じ町字ばかりにならないように上限を持つ。
+  // limit=1 なら全部ちがう町字、limit=2 まで許すと画像を優先しやすくなる。
+  const pick = (pool, limit = 1) => {
+    const cands = pool.filter((r) =>
+      !picked.includes(r) && (machiCount.get(r.machiaza) ?? 0) < limit);
     if (cands.length === 0) return false;
-    // weight を効かせた重み付きランダム
-    const total = cands.reduce((s, r) => s + (r.weight || 1), 0);
+    const total = cands.reduce((sum, r) => sum + (r.weight || 1), 0);
     let x = Math.random() * total;
     const hit = cands.find((r) => (x -= r.weight || 1) <= 0) ?? cands[0];
     picked.push(hit);
-    usedMachi.add(hit.machiaza);
+    machiCount.set(hit.machiaza, (machiCount.get(hit.machiaza) ?? 0) + 1);
     return true;
   };
-  take(rows.filter((r) => r.is_partner === 1));   // 加盟店枠（無ければ素通り）
-  while (picked.length < n && take(rows)) {}
 
-  // 町字が足りない場所（谷中の中だけ、など）では上のループが3件に届かない。
-  // 「別々の町字から」は散らすための優先ルールであって、案の数を削る理由ではないので、
-  // 足りないぶんは同じ町字からでも埋める。
-  if (picked.length < n) {
-    const rest = rows.filter((r) => !picked.includes(r));
-    while (picked.length < n && rest.length > 0) {
-      picked.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
-    }
-  }
+  const withImage = rows.filter((r) => r.image_url);
+
+  pick(rows.filter((r) => r.is_partner === 1));       // 加盟店枠（無ければ素通り）
+  while (picked.length < n && pick(withImage, 1)) {}  // まず画像あり・別々の町字
+  while (picked.length < n && pick(withImage, 2)) {}  // 画像を優先し、同じ町字も2件まで許す
+  while (picked.length < n && pick(rows, 1)) {}       // 足りなければ画像なしも
+  while (picked.length < n && pick(rows, 3)) {}       // それでも足りなければ町字の縛りを外す
   return picked;
 }
 

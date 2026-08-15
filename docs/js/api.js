@@ -32,16 +32,14 @@ export async function fetchProposals(origin, layer, minutes) {
 }
 
 /**
- * 目的地から、正体を明かさないティーザー文を作る。
- * 生成AIで作った文（teaser 列）が入っていればそれを使い、
- * 無ければ持っているデータから組み立てる。
+ * 正体を明かさないティーザー文。
+ *
+ * 文そのものは手元で作って DB に入れてある（scripts/write_teasers.py）。
+ * ここでは、万一入っていなかったときの受け皿だけ持つ。
  */
 export function teaserOf(dest) {
-  const t = (dest.teaser ?? '').trim();
-  if (/^\d{4}年$/.test(t)) return `${t.replace('年', '')}年から続く${dest.category ?? '店'}`;
-  if (/^文化財\d+件$/.test(t)) return `文化財を${t.replace(/[^\d]/g, '')}件もつ寺社`;
-  if (t.startsWith('見学:')) return `${dest.category ?? '工房'}の仕事場`;
-  if (t) return t;
+  const teaser = (dest.teaser ?? '').trim();
+  if (teaser) return teaser;
   return dest.category ? `この先にある${dest.category}` : 'まだ名前を伏せています';
 }
 
