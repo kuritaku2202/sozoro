@@ -116,15 +116,37 @@ python3 -m http.server 8080
 文化財は「1件＝1目的地」にしていない。190件のうち159件は寺の所蔵物（美術工芸品）で
 行っても見られないため、**場所（寺社）単位に集約**している。
 
-座標・画像・解説は Wikipedia（CC BY-SA）で補強（156箇所中60箇所が一致）。
-**モザイク画像とティーザー文は、後からネット調達と生成AIで差し替える前提**で列だけ用意してある。
+座標・画像・解説は Wikipedia と Wikimedia Commons（いずれも CC BY-SA）で補強した。
+**別の場所の写真を出さないよう、名前が一致したものしか採っていない。**
 
-再取得と再生成:
+| レイヤー | 提示できる件数 | うち画像あり |
+|---|---:|---:|
+| 街を見る | 130 | **95（73%）** |
+| 静かに歩く | 87 | 13 |
+| 体験する | 197 | 7 |
+| 食べる | 7,136 | 3 |
+
+個人商店の写真は Wikipedia にも Commons にも無いため、「体験する」「食べる」は
+ほぼ画像が無い。ここは手作業か現地撮影で足すことになる。
+
+ティーザー文は全件に付けてある（`scripts/write_teasers.py`）。
+**正体は明かさず**「［具体的な事実］＋［施設の種別］」の形にそろえ、
+有名な場所は型で作ると弱いので50件あまりを手で書いた。
+
+### データを作り直す
+
+> **注意: 加工用のスクリプトとデータは、このリポジトリには入っていない。**
+> ひとつ上のフォルダ（`東京都ハッカソン2026/`）に `scripts/` と `data/` があり、
+> そこを作業ディレクトリにして実行する。このリポジトリに入っているのは
+> **配信するアプリと、D1 のスキーマ**だけ。`db/seed.sql` は生成物なので追跡していない。
 
 ```sh
-sh scripts/fetch_opendata.sh            # 元データを data/raw/ に
+cd ..                                   # 東京都ハッカソン2026/ へ
+sh scripts/fetch_opendata.sh            # 元データを data/raw/ に取得
 python3 scripts/collect_destinations.py # 正規化 → data/destinations.csv
-python3 scripts/enrich_wikipedia.py     # 座標・画像・解説の補強（数分かかる）
+python3 scripts/enrich_wikipedia.py     # 文化財の場所を Wikipedia と照合
+python3 scripts/find_images.py          # 画像を探す（Commons まで見るので約50分）
+python3 scripts/write_teasers.py        # ティーザー文を作る
 python3 scripts/build_congestion_model.py
 python3 scripts/build_seed_sql.py       # → SOZORO/db/seed.sql
 ```
