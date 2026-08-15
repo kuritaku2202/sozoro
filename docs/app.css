@@ -112,18 +112,28 @@ body {
 }
 
 .app {
-  max-width: 30rem;
-  margin: 0 auto;
+  position: relative;
   min-height: 100dvh;
-  padding: max(1rem, env(safe-area-inset-top)) 1rem
-           max(1.25rem, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
 }
 
-/* ── ヘッダ ─────────────────────────────────────────────── */
-.brand { display: flex; align-items: baseline; gap: .6rem; }
+/* ── ヘッダ（地図の上に浮かせる）───────────────────────────── */
+.brand {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + .75rem);
+  left: 1rem;
+  z-index: 1100;                /* シート(1000)よりさらに上 */
+  display: flex;
+  align-items: baseline;
+  gap: .6rem;
+  padding: .45rem .95rem;
+  border-radius: var(--shape-full);
+  /* 地図の上でも読めるように、下地を敷く */
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--elev-2);
+}
 .brand__mark {
   font-size: 1.05rem;
   font-weight: 800;          /* Expressive は字が太い */
@@ -254,10 +264,8 @@ input[type='range'] {
   position: relative;
   flex: 1;
   min-height: 0;
-  border-radius: var(--shape-xl);
   overflow: hidden;
   background: var(--surface-high);
-  box-shadow: var(--elev-2);
 }
 .stage[hidden] { display: none; }
 
@@ -310,8 +318,9 @@ input[type='range'] {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 0 1rem 1.25rem;
+  padding: 0 1rem max(1.25rem, env(safe-area-inset-bottom));
 }
+.sheet__body > * { max-width: 30rem; margin-inline: auto; }
 /* 畳んでいるときは中身をスクロールさせない（地図を触りたいので） */
 .sheet[data-detent='peek'] .sheet__body,
 .sheet[data-detent='min'] .sheet__body { overflow-y: hidden; }
@@ -319,8 +328,16 @@ input[type='range'] {
 /* つまみだけ出している状態では、つまみを目立たせる */
 .sheet[data-detent='min'] .sheet__grip span { background: var(--outline); width: 52px; }
 
-/* 全画面の画面（⑤以降）は舞台を隠して出す */
-.screen--full { padding-bottom: .5rem; }
+/* 全画面の画面（⑤以降）は舞台を隠して出す。
+   .app の余白を外したので、こちらで持つ。ロゴのぶん上を空ける。 */
+.screen--full {
+  max-width: 30rem;
+  margin-inline: auto;
+  width: 100%;
+  padding:
+    calc(env(safe-area-inset-top) + 4rem) 1rem
+    max(1.25rem, env(safe-area-inset-bottom));
+}
 .map .leaflet-control-attribution { font-size: 10px; }
 
 .card {
