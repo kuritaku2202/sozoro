@@ -33,9 +33,13 @@ python3 scripts/enrich_wikipedia.py      # 座標・画像・解説の補強（�
 python3 scripts/build_seed_sql.py
 
 cd SOZORO
-wrangler d1 execute sozoro --file=db/schema.sql --remote
-wrangler d1 execute sozoro --file=db/seed.sql   --remote
+yes | wrangler d1 execute sozoro --file=db/schema.sql --remote
+yes | wrangler d1 execute sozoro --file=db/seed.sql   --remote
 ```
+
+> **`yes |` を必ず付ける。** wrangler は「DBが一時的に使えなくなるが進めてよいか」と
+> 対話で聞いてくる。付けずにスクリプトから流すとそこで止まり、
+> **schema.sql だけ適用されて中身が空のDBが本番に残る**（一度やらかした）。
 
 確認：
 
