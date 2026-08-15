@@ -1,0 +1,17 @@
+{
+  "name": "SOZORO — 行き先を伏せた散歩",
+  "short_name": "SOZORO",
+  "lang": "ja",
+  "description": "いまいる場所から半径500mのどこかへ。案内は方角と残り距離だけ。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12100e",
+  "theme_color": "#12100e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
