@@ -1,5 +1,8 @@
 # SOZORO
 
+**デモ: https://kuritaku2202.github.io/sozoro/**
+（スマホで開いてください。位置情報の許可が要ります。ホーム画面に追加するとアプリとして開きます）
+
 行き先を伏せた散歩アプリ。いまいる場所から半径 500m のどこかを勝手に決め、
 **方角と残り距離だけ**を案内する。道は歩く人が決める。着いて初めて、そこが何かわかる。
 
@@ -13,6 +16,11 @@ SOZORO 本体（台東区のオーバーツーリズム対策）の土台にあ�
 python3 -m http.server 8080
 # → http://localhost:8080
 ```
+
+### 公開
+
+`main` に push すると GitHub Pages が自動で再ビルドする（Settings > Pages / branch `main`, path `/`）。
+反映まで1分ほどかかる。
 
 Geolocation と DeviceOrientation は secure context でしか動かない。
 `localhost` は secure context なので開発はこれでよい。
@@ -87,6 +95,10 @@ Chromium（Playwright）に浅草 `35.7148, 139.7967` を与えて通しで確�
 - 測位が一時的に失敗してもエラー表示は復帰時に自動で消える
 - 圏外にしてリロードしても、アプリシェル（HTML/CSS/JS）はキャッシュから開く
 - manifest は `display: standalone`、アイコン3件、Service Worker は active
+
+公開後、本番URL（HTTPS）でも同じ手順で確認済み。secure context・Overpass への
+クロスオリジン通信（3.5秒 / 250件）・到着時の店名開示（サンパウロ／カフェ）・
+Service Worker のスコープ `/sozoro/`・`start_url` の解決先 `/sozoro/` がいずれも正常。
 
 ## 出典
 
