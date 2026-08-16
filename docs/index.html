@@ -76,9 +76,11 @@
         </div>
 
         <p class="note note--small">
-          8月は最も空く月（係数0.871）で、15時以降は混雑スコアが落ちます。
-          実時刻・実際の場所のままだと「混んでいます」が出ないことがあるため、
-          <strong>浅草か上野を選び、11月あたりの正午にする</strong>と体験がひととおり見られます。
+          <strong>はじめは「雷門・11月23日 12:00」に合わせてあります。</strong>
+          現地にいなくても、混雑の提示から到着まで通して試せます。
+          実際の現在地と時刻で使うときは「すべて実際の値に戻す」を押してください。
+          （8月は最も空く月で、15時以降は混雑スコアが落ちるため、
+          実時刻のままだと「混んでいます」が出ないことがあります）
         </p>
       </details>
 
@@ -115,8 +117,8 @@
       <div class="field">
         <label class="field__label" for="mood-minutes">次の予定までの時間</label>
         <div class="field__row">
-          <input type="range" id="mood-minutes" min="20" max="120" step="10" value="30">
-          <output class="field__value" id="mood-minutes-value">30 分</output>
+          <input type="range" id="mood-minutes" min="20" max="120" step="5" value="50">
+          <output class="field__value" id="mood-minutes-value">50 分</output>
         </div>
       </div>
 
@@ -186,7 +188,6 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn" id="btn-repick">引き直す</button>
         <button class="btn btn--quiet" id="btn-quit">やめる</button>
       </div>
 

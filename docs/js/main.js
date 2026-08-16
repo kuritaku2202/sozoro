@@ -19,7 +19,6 @@ const el = {
     nav: $('screen-nav'),
     arrived: $('screen-arrived'),
   },
-  btnRepick: $('btn-repick'),
   btnQuit: $('btn-quit'),
   btnAgain: $('btn-again'),
   btnHome: $('btn-home'),
@@ -410,8 +409,6 @@ function goHome() {
 /* ---------- 起動 ---------- */
 
 el.radiusNav.addEventListener('input', (e) => setArrivalRadius(e.target.value));
-// 「引き直す」は3案の画面に戻す。台東区のオープンデータ以外は使わない。
-el.btnRepick.addEventListener('click', () => show('proposals'));
 el.btnQuit.addEventListener('click', goHome);
 el.btnHome.addEventListener('click', goHome);
 el.btnAgain.addEventListener('click', () => {
@@ -499,8 +496,15 @@ async function startHome() {
   const provider = await setupMap(() => { resetMap(); buildMap(); renderHome(); });
   document.body.dataset.map = provider;
   buildMap();
-  weather = await congestion.fetchWeather();
-  renderHome();
+
+  // 最初からデモモードで開く。天気も固定して、毎回同じ画面が出るようにする
+  weather = DEMO_WEATHER;
+  home.weather.value = DEMO_WEATHER;
+  home.timeInput.value = DEMO_TIME;
+  demoUI.place.value = DEMO_PLACE;
+  congestion.setDemoTime(new Date(DEMO_TIME));
+  const [lat, lon] = DEMO_PLACE.split(',').map(Number);
+  setDemoPlace({ lat, lon });   // この中で renderHome まで走る
 }
 
 home.cta.addEventListener('click', () => {
@@ -515,6 +519,9 @@ home.apply.addEventListener('click', () => {
 });
 home.reset.addEventListener('click', async () => {
   congestion.setDemoTime(null);
+  home.timeInput.value = '';
+  demoUI.place.value = '';
+  setDemoPlace(null);                       // 実測の測位に戻す
   weather = await congestion.fetchWeather();
   home.weather.value = weather;
   renderHome();
@@ -522,6 +529,16 @@ home.reset.addEventListener('click', async () => {
 
 
 /* ---------- デモモード（現地にいなくても試せるようにする）---------- */
+
+/* ══════════════════════════════════════════════════════════════
+   デモモードの初期値。
+   審査員が現地（浅草）にいないまま開いても、混雑の提示から到着まで
+   ひととおり試せるように、最初からこの場所・この日時に合わせておく。
+   実際の現在地で使うときは、デモパネルの「すべて実際の値に戻す」を押す。
+   ══════════════════════════════════════════════════════════════ */
+const DEMO_PLACE = '35.7108,139.7967';        // 雷門
+const DEMO_TIME = '2026-11-23T12:00';         // 最も混む月の、ピークの時間帯
+const DEMO_WEATHER = '晴';
 
 const demoUI = {
   place: $('demo-place'),
@@ -646,8 +663,10 @@ function renderProposals(data, minutes) {
     li.append(button);
     trip.list.append(li);
   }
+  // 実際に出した数を書く。1案しか出せないのに「3つ選びました」では嘘になる
   trip.listStatus.textContent =
-    `${data.count}件の候補から3つ選びました（片道${radiusForMinutes(minutes)}m以内・混雑している地区は外しています）`;
+    `${data.count}件の候補から${data.proposals.length}つ選びました`
+    + `（片道${radiusForMinutes(minutes)}m以内・混雑している地区は外しています）`;
 }
 
 async function findProposals() {
