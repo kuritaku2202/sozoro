@@ -83,14 +83,18 @@ db/       D1 のスキーマと種SQL（公開しない）
 ## 動かす
 
 ```sh
-cd docs
-python3 -m http.server 8080
-# → http://localhost:8080
+yes | wrangler d1 execute sozoro --local --file=db/schema.sql
+yes | wrangler d1 execute sozoro --local --file=db/seed.sql
+wrangler dev
+# → http://localhost:8787
 ```
 
-ただし `/api/*` はこの方法では動かない。API ごと動かすなら `wrangler dev`。
+`--local` なので本番には触らない。手元の DB を引いて API まで動く。
 
-デプロイと D1 の手順は [DEPLOY.md](DEPLOY.md)。
+画面だけ見たいなら `cd docs && python3 -m http.server 8080` でもよいが、
+`/api/*` は動かないので3案は出ない。
+
+**チームで開発するときは [TEAM.md](TEAM.md)。** デプロイと D1 の手順は [DEPLOY.md](DEPLOY.md)。
 
 ### 手元のブラウザで試す
 
