@@ -72,6 +72,21 @@ git add -A && git commit && git push -u origin ブランチ名
 
 ---
 
+## アプリではなく「データだけ」使いたい場合
+
+別のアプリや分析でこのデータを使いたいなら、SOZORO を動かす必要はない。
+鍵の要らない読み取り API と、単体で開ける SQLite ファイルを用意してある。
+
+```sh
+curl "https://sozoro.opd-hackathon-b.workers.dev/api/all?layer=街を見る&has_image=1&limit=200"
+curl "https://sozoro.opd-hackathon-b.workers.dev/api/sources"
+```
+
+SQLite・CSV の配布ファイルと詳しい説明は、ひとつ上のフォルダの
+`data/share/` にある（`このデータの使い方.md`）。
+
+---
+
 ## 本番のデータベースを触りたい場合
 
 **基本は触らなくてよい。** どうしても必要なとき（データの入れ替え・確認）は、

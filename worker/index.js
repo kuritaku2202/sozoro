@@ -78,6 +78,53 @@ export default {
                            { headers: { 'cache-control': 'no-store' } });
     }
 
+    // 目的地マスタをそのまま読ませる。チームの別のアプリから使えるようにするため。
+    // 中身は台東区・荒川区のオープンデータなので、鍵はかけない。書き込みはできない。
+    if (url.pathname === '/api/all') {
+      const limit = Math.min(Number(url.searchParams.get('limit')) || 100, 500);
+      const offset = Math.max(Number(url.searchParams.get('offset')) || 0, 0);
+      const layer = url.searchParams.get('layer');
+      const ward = url.searchParams.get('ward');
+      const hasImage = url.searchParams.get('has_image') === '1';
+      const includeHidden = url.searchParams.get('include_hidden') === '1';
+
+      if (layer && !LAYERS.includes(layer)) {
+        return Response.json({ error: `layer は ${LAYERS.join(' / ')} のどれか` }, { status: 400 });
+      }
+
+      const where = [];
+      const args = [];
+      if (!includeHidden) where.push("status = 'active'");
+      if (layer) { where.push('layer = ?'); args.push(layer); }
+      if (ward) { where.push('ward = ?'); args.push(ward); }
+      if (hasImage) where.push('image_url IS NOT NULL');
+      const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+      const [{ results: rows }, { results: counted }] = await Promise.all([
+        env.DB.prepare(`
+          SELECT id, source_id, layer, category, name, name_en, lat, lon, coord_quality,
+                 address, ward, machiaza, opening_hours, image_url, image_credit,
+                 teaser, description, is_partner, weight, status, updated_at
+            FROM destinations ${clause}
+           ORDER BY id LIMIT ? OFFSET ?`).bind(...args, limit, offset).all(),
+        env.DB.prepare(`SELECT COUNT(*) AS total FROM destinations ${clause}`).bind(...args).all(),
+      ]);
+
+      return Response.json({
+        total: counted[0].total, limit, offset, count: rows.length,
+        destinations: rows, attribution: ATTRIBUTION,
+      }, { headers: { 'cache-control': 'public, max-age=300',
+                      'access-control-allow-origin': '*' } });
+    }
+
+    // データの出どころ一覧。出典表示に使う
+    if (url.pathname === '/api/sources') {
+      const { results } = await env.DB.prepare('SELECT * FROM sources ORDER BY id').all();
+      return Response.json({ sources: results, attribution: ATTRIBUTION },
+        { headers: { 'cache-control': 'public, max-age=3600',
+                     'access-control-allow-origin': '*' } });
+    }
+
     if (url.pathname !== '/api/destinations' && url.pathname !== '/api/nearby') {
       return Response.json({ error: 'そのAPIは無い' }, { status: 404 });
     }
