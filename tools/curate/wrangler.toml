@@ -1,0 +1,28 @@
+# 選別ツールは本番アプリとは別の Worker にする。
+#
+# 理由: 提出するデモ URL（sozoro.opd-hackathon-b.workers.dev）に内輪の作業画面を
+# ぶら下げると、審査員に見えてしまう。選別が終わったらこの Worker だけ消せばよい。
+# D1 は同じ "sozoro" を共有するので、採用結果はそのまま本番のシードに使える。
+#
+# デプロイ:
+#   wrangler d1 execute sozoro --remote --file=schema.sql
+#   wrangler secret put CURATE_PASSWORD
+#   wrangler deploy
+
+name = "sozoro-curate"
+main = "worker/index.js"
+compatibility_date = "2026-08-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sozoro"
+database_id = "74012c4f-5b3b-4ef7-8de0-c7f7276c8473"
+
+[observability]
+enabled = true
+
+# 合言葉はここに書かない。`wrangler secret put CURATE_PASSWORD` で入れる。

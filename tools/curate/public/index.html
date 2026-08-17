@@ -1,0 +1,79 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SOZORO 物件選別</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="app.css">
+
+<header>
+  <h1>SOZORO 物件選別</h1>
+  <div class="counts">
+    <span class="chip big">文化財 <b id="c-bunkazai">0</b> <s>/ 100</s></span>
+    <span class="chip big">飲食店 <b id="c-inshoku">0</b> <s>/ 100</s></span>
+    <span class="chip muted">表示 <b id="c-shown">0</b> / <b id="c-total">0</b></span>
+    <span class="chip muted" id="c-members"></span>
+    <span class="chip muted" id="c-sync">同期待ち</span>
+    <span class="chip muted" id="c-pins"></span>
+  </div>
+  <div class="actions">
+    <span class="me" id="me"></span>
+    <a id="ex-csv" href="#">CSV</a>
+    <a id="ex-json" href="#">JSON</a>
+    <a id="ex-sql" href="#">SQL</a>
+  </div>
+</header>
+
+<div id="gate">
+  <div class="card">
+    <h2>選別ツールに入る</h2>
+    <p>5人で同時に作業します。<b>誰が採ったか</b>を残すので名前を入れてください。</p>
+    <label>名前<input id="g-name" placeholder="くりはら"></label>
+    <label>合言葉<input id="g-pass" type="password" placeholder="チームで共有しているもの"></label>
+    <p class="hint">地図の鍵はサーバに入れてあります。設定は要りません。</p>
+    <button id="g-go">入る</button>
+    <p class="err" id="g-err" hidden></p>
+  </div>
+</div>
+
+<main hidden id="app">
+  <aside>
+    <section class="filters">
+      <label class="ck"><input type="checkbox" id="f-bunkazai" checked> 文化財 <span id="n-bunkazai" class="n"></span></label>
+      <label class="ck"><input type="checkbox" id="f-inshoku" checked> 飲食店 <span id="n-inshoku" class="n"></span></label>
+      <hr>
+      <p class="lead">混雑エリアを外す</p>
+      <label class="ck"><input type="checkbox" id="f-congestion" checked>
+        混雑コアから <b id="v-cong">500</b> m 以内を除く</label>
+      <input type="range" id="f-congm" min="0" max="1000" step="50" value="500">
+      <p class="hint">上野公園・アメ横・雷門・浅草寺・仲見世の5地点。
+        来訪者アンケートで「人が多い」の回答率が最上位だったエリア。</p>
+      <hr>
+      <p class="lead">地雷除去の下限フィルタ</p>
+      <label>星 <b id="v-rating">3.5</b> 以上
+        <input type="range" id="f-rating" min="0" max="5" step="0.1" value="3.5"></label>
+      <label>口コミ <b id="v-reviews">20</b> 件以上
+        <input type="range" id="f-reviews" min="0" max="300" step="5" value="20"></label>
+      <label class="ck"><input type="checkbox" id="f-unmatched">
+        Google で照合できなかったものも出す</label>
+      <hr>
+      <label>上野から <b id="v-dmin">0</b>〜<b id="v-dmax">4800</b> m
+        <input type="range" id="f-dmin" min="0" max="4800" step="100" value="0">
+        <input type="range" id="f-dmax" min="0" max="4800" step="100" value="4800"></label>
+      <label class="ck"><input type="checkbox" id="f-picked"> 採用したものだけ出す</label>
+      <hr>
+      <label>並び順
+        <select id="sort">
+          <option value="rating">星が高い順</option>
+          <option value="reviews">口コミが多い順</option>
+          <option value="cong">混雑コアから遠い順</option>
+          <option value="dist">上野から遠い順</option>
+          <option value="machiaza">町字ごと</option>
+        </select></label>
+      <input type="search" id="q" placeholder="名前で絞る">
+    </section>
+    <ul id="list"></ul>
+    <p id="more" class="more" hidden></p>
+  </aside>
+  <div id="map"></div>
+</main>
+
+<script src="app.js"></script>

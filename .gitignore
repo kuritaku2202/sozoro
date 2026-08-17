@@ -1,2 +1,5 @@
 .DS_Store
 .wrangler/
+
+# 選別ツールの生成物（scripts/curate_match.py で作り直せる）
+tools/curate/public/data/

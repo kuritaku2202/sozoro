@@ -1,0 +1,118 @@
+/* 開発者しか見ない画面なので、見た目より情報密度を優先する。 */
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font: 13px/1.5 system-ui, -apple-system, "Hiragino Sans", sans-serif;
+  color: #1c1917; background: #faf9f7;
+  display: flex; flex-direction: column;
+}
+
+header {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 8px 14px; background: #fff; border-bottom: 1px solid #e7e5e4;
+}
+h1 { font-size: 15px; margin: 0; }
+.counts { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 99px;
+  padding: 2px 10px; white-space: nowrap;
+}
+.chip b { font-variant-numeric: tabular-nums; }
+.chip.muted { color: #78716c; }
+.actions { margin-left: auto; display: flex; gap: 8px; }
+button {
+  font: inherit; padding: 5px 12px; border-radius: 6px;
+  border: 1px solid #d6d3d1; background: #fff; cursor: pointer;
+}
+button:hover { background: #f5f5f4; }
+button.danger { color: #b91c1c; border-color: #fca5a5; }
+
+#keygate {
+  position: fixed; inset: 0; background: #faf9f7;
+  display: grid; place-items: center; z-index: 10;
+}
+.card {
+  background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
+  padding: 24px; max-width: 480px;
+}
+.card h2 { margin: 0 0 12px; font-size: 16px; }
+.card p { margin: 0 0 12px; color: #57534e; }
+.card .warn { color: #9a3412; }
+.card input { width: 100%; padding: 8px; font: inherit; margin-bottom: 12px;
+  border: 1px solid #d6d3d1; border-radius: 6px; }
+
+main { flex: 1; display: grid; grid-template-columns: 420px 1fr; min-height: 0; }
+aside { display: flex; flex-direction: column; min-height: 0;
+  border-right: 1px solid #e7e5e4; background: #fff; }
+#map { min-height: 0; }
+
+.filters { padding: 10px 14px; border-bottom: 1px solid #e7e5e4; }
+.filters hr { border: 0; border-top: 1px solid #f0efed; margin: 8px 0; }
+.filters label { display: block; margin: 6px 0; color: #44403c; }
+.filters label.ck { display: flex; align-items: center; gap: 6px; }
+.filters .n { color: #a8a29e; margin-left: auto; font-variant-numeric: tabular-nums; }
+.filters .lead { margin: 4px 0; font-weight: 600; color: #1c1917; }
+.filters input[type=range] { width: 100%; }
+.filters select, .filters input[type=search] {
+  width: 100%; padding: 5px; font: inherit;
+  border: 1px solid #d6d3d1; border-radius: 6px; }
+
+#list { flex: 1; overflow: auto; list-style: none; margin: 0; padding: 0; }
+#list li { border-bottom: 1px solid #f0efed; padding: 7px 14px; cursor: pointer; }
+#list li:hover { background: #fafaf9; }
+#list li.picked { background: #ecfdf5; }
+#list li.active { outline: 2px solid #0ea5e9; outline-offset: -2px; }
+.row { display: flex; align-items: baseline; gap: 8px; }
+.row .name { font-weight: 600; flex: 1; }
+.row .star { color: #b45309; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row .star.none { color: #a8a29e; }
+.meta { color: #78716c; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.badge { background: #f5f5f4; border-radius: 4px; padding: 0 5px; }
+.badge.chome { background: #fef3c7; color: #92400e; }
+.detail { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.detail img { width: 108px; height: 80px; object-fit: cover; border-radius: 6px;
+  background: #f5f5f4; }
+.detail a { color: #0369a1; }
+.more { padding: 10px 14px; color: #78716c; margin: 0;
+  border-top: 1px solid #e7e5e4; }
+
+/* --- チーム共有版で足したもの --- */
+.chip.big { font-size: 14px; }
+.chip.big b { font-size: 16px; }
+.chip s { color: #a8a29e; text-decoration: none; }
+.chip.bad, #c-sync.bad { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.actions a {
+  font: inherit; padding: 5px 12px; border-radius: 6px; text-decoration: none;
+  border: 1px solid #d6d3d1; background: #fff; color: #1c1917;
+}
+.actions a:hover { background: #f5f5f4; }
+.me { align-self: center; color: #57534e; font-weight: 600; }
+
+#gate { position: fixed; inset: 0; background: #faf9f7; display: grid;
+  place-items: center; z-index: 10; }
+#gate label { display: block; margin-bottom: 10px; color: #44403c; }
+#gate input { width: 100%; padding: 8px; font: inherit; margin-top: 4px;
+  border: 1px solid #d6d3d1; border-radius: 6px; }
+.err { color: #b91c1c; margin: 10px 0 0; }
+.hint { color: #78716c; font-size: 12px; margin: 4px 0 0; }
+
+#list li.by-other { background: #f5f3ff; }
+#list li.by-other.active { outline-color: #7c3aed; }
+.badge.hot { background: #fee2e2; color: #991b1b; }
+.by { color: #6d28d9; font-weight: 600; }
+
+/* #gate や main は display を明示しているので、hidden 属性だけでは消えない
+   （UAスタイルの display:none より詳細度が高い）。ここで確実に消す。 */
+[hidden] { display: none !important; }
+
+/* 絞り込みが縦に伸びるとリストが潰れる。上限を切って、残りを必ずリストに渡す。 */
+.filters { flex: 0 0 auto; max-height: 46%; overflow-y: auto; }
+#list { flex: 1 1 auto; min-height: 160px; }
+
+/* 詳細のリンクはボタンに見せる（一覧の中で押せると分かるように） */
+.detail a.btn {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  border: 1px solid #d6d3d1; background: #fff; color: #1c1917;
+  text-decoration: none; font-weight: 600;
+}
+.detail a.btn:hover { background: #f5f5f4; border-color: #a8a29e; }
